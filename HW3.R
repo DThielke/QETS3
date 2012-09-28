@@ -53,7 +53,7 @@ best.available.helper <- function(row) {
 }
 
 # calculate book equity
-comp$be <- comp$at - comp$lt + best.available(comp$txditc) - best.available(cbind(comp$pstkl, comp$pstkrv, comp$upstk))
+comp$be <- 1e6*(comp$at - comp$lt + best.available(comp$txditc) - best.available(cbind(comp$pstkl, comp$pstkrv, comp$upstk)))
 
 # calculate profitability (ROA)
 comp$roa <- (comp$ib - best.available(comp$dvp) + best.available(comp$txdi)) / comp$at
@@ -79,7 +79,16 @@ for (s in stocks) {
         diff(comp$che[stock]) + 
         diff(comp$dlc[stock]) - 
         dp[-1] / at[-len])[-trim]
-    
-    # calculate book to market equity
-    
 }
+
+# calculate book to market equity
+load("data/smr.Rdata")
+names(crsp.clean) <- tolower(names(crsp.clean))
+crsp <- crsp.clean[crsp.clean$month == 12, c("permno", "year", "month", "mktcap")]
+crsp$mktcap <- crsp$mktcap * 1000
+comp <- merge(comp, crsp, by=c("permno", "year"))
+comp$btm <- comp$be / comp$mktcap
+comp$btm[comp$btm < 0] <- NA
+
+# save the results
+save(comp, file="comp.RData")
