@@ -1,9 +1,11 @@
+# Homework 3
+# David Thielke, Dejing Huang, Michael Casini, Chris Penney
+
 # load the data and rename columns
 comp <- read.csv("data/crsp.csv", header=TRUE)
 names(comp) <- tolower(names(comp))
 names(comp)[2] <- "permno"
 names(comp)[4] <- "year"
-stocks <- levels(factor(comp$permno))
 
 # use cusip to remove non-ordinary shares
 comp$cusip <- as.character(comp$cusip)
@@ -58,6 +60,7 @@ comp$be <- 1e6*(comp$at - comp$lt + best.available(comp$txditc) - best.available
 # calculate profitability (ROA)
 comp$roa <- (comp$ib - best.available(comp$dvp) + best.available(comp$txdi)) / comp$at
 
+stocks <- levels(factor(comp$permno))
 for (s in stocks) {
     stock <- comp$permno == s # row indices of stock
     len <- length(comp[stock,1]) # number of periods for this stock
@@ -73,12 +76,12 @@ for (s in stocks) {
     
     # calculate accruals
     dp <- comp$dp[stock]
-    comp$accruals[stock][3:len] <- (
+    comp$accruals[stock][3:len] <- ((
         diff(comp$act[stock]) - 
         diff(comp$lct[stock]) - 
         diff(comp$che[stock]) + 
         diff(comp$dlc[stock]) - 
-        dp[-1] / at[-len])[-trim]
+        dp[-1]) / at[-len])[-trim]
 }
 
 # calculate book to market equity
@@ -91,4 +94,5 @@ comp$btm <- comp$be / comp$mktcap
 comp$btm[comp$btm < 0] <- NA
 
 # save the results
+comp <- comp[,c("permno","year","month", "be","roa","agr","issues","accruals","mktcap","btm")]
 save(comp, file="comp.RData")
