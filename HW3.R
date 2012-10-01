@@ -54,8 +54,8 @@ best.available.helper <- function(row) {
         return (row[best])
 }
 
-# calculate book equity
-comp$be <- 1e6*(comp$at - comp$lt + best.available(comp$txditc) - best.available(cbind(comp$pstkl, comp$pstkrv, comp$upstk)))
+# calculate book equity (in millions)
+comp$be <- comp$at - comp$lt + best.available(comp$txditc) - best.available(cbind(comp$pstkl, comp$pstkrv, comp$upstk))
 
 # calculate profitability (ROA)
 comp$roa <- (comp$ib - best.available(comp$dvp) + best.available(comp$txdi)) / comp$at
@@ -68,27 +68,27 @@ for (s in stocks) {
     
     # calculate asset growth
     at <- comp$at[stock]
-    comp$agr[stock][3:len] <- (diff(at) / at[-len])[-trim]
+    comp$agr[stock][2:len] <- (diff(at) / at[-len])
     
     # calculate net stock issues
     shares <- comp$csho[stock] * comp$adjex_f[stock]
-    comp$issues[stock][3:len] <- (shares[-1] / shares[-len])[-trim]
+    comp$issues[stock][2:len] <- (shares[-1] / shares[-len])
     
     # calculate accruals
     dp <- comp$dp[stock]
-    comp$accruals[stock][3:len] <- ((
+    comp$accruals[stock][2:len] <- ((
         diff(comp$act[stock]) - 
         diff(comp$lct[stock]) - 
         diff(comp$che[stock]) + 
         diff(comp$dlc[stock]) - 
-        dp[-1]) / at[-len])[-trim]
+        dp[-1]) / at[-len])
 }
 
 # calculate book to market equity
 load("data/smr.Rdata")
 names(crsp.clean) <- tolower(names(crsp.clean))
-crsp <- crsp.clean[crsp.clean$month == 12, c("permno", "year", "month", "mktcap")]
-crsp$mktcap <- crsp$mktcap * 1000
+crsp <- crsp.clean[crsp.clean$month == 12, c("permno", "year", "month", "prc", "shrout")]
+crsp$mktcap <- crsp$prc * crsp$shrout / 1000
 comp <- merge(comp, crsp, by=c("permno", "year"))
 comp$btm <- comp$be / comp$mktcap
 comp$btm[comp$btm < 0] <- NA
