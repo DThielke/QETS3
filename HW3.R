@@ -72,11 +72,11 @@ for (s in stocks) {
     
     # calculate net stock issues
     shares <- comp$csho[stock] * comp$adjex_f[stock]
-    comp$issues[stock][2:len] <- (shares[-1] / shares[-len])
+    comp$nsi[stock][2:len] <- (shares[-1] / shares[-len])
     
     # calculate accruals
     dp <- comp$dp[stock]
-    comp$accruals[stock][2:len] <- ((
+    comp$acc[stock][2:len] <- ((
         diff(comp$act[stock]) - 
         diff(comp$lct[stock]) - 
         diff(comp$che[stock]) + 
@@ -88,11 +88,11 @@ for (s in stocks) {
 load("data/smr.Rdata")
 names(crsp.clean) <- tolower(names(crsp.clean))
 crsp <- crsp.clean[crsp.clean$month == 12, c("permno", "year", "month", "prc", "shrout")]
-crsp$mktcap <- crsp$prc * crsp$shrout / 1000
+crsp$mktcap <- abs(crsp$prc) * crsp$shrout / 1000
 comp <- merge(comp, crsp, by=c("permno", "year"))
 comp$btm <- comp$be / comp$mktcap
 comp$btm[comp$btm < 0] <- NA
 
 # save the results
-comp <- comp[,c("permno","year","month", "be","roa","agr","issues","accruals","mktcap","btm")]
+comp <- comp[,c("permno","year","month", "be","roa","agr","nsi","acc","mktcap","btm")]
 save(comp, file="comp.RData")
